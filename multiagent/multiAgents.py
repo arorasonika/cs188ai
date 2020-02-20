@@ -74,7 +74,27 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        def getPositionTupleFromState(a):
+            return (a.getPosition()[0], a.getPosition()[1])
+
+        ghostPositions = [getPositionTupleFromState(ghostState) for ghostState in newGhostStates]
+
+        if newPos in ghostPositions and not min(newScaredTimes) > 0:  # if not scared and pacman close to ghost position
+            return -100.0
+
+        if newPos in currentGameState.getFood().asList():
+            return 100.0
+
+        nextNearestFood = min([manhattanDistance(f, newPos) for f in newFood.asList()])
+        nextNearestGhost = min([manhattanDistance(g, newPos) for g in ghostPositions])
+
+        if not min(newScaredTimes) > 0:  # not scared
+            return 100.0*(1.0/nextNearestFood) - 100.0*(1.0/nextNearestGhost)
+        else:  # if ghost is scared, focus more on the food
+            return 100.0*(1.0/nextNearestFood) - 50*(1.0/nextNearestGhost)
+
+        #return successorGameState.getScore()
+
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -135,6 +155,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
+        def helper(state, depth=1):
+
+        for action in gameState.getLegalActions(0):
+            
         util.raiseNotDefined()
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
