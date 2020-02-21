@@ -175,7 +175,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 return self.evaluationFunction(state)
             retVal = float("-Inf")
             for action in state.getLegalActions(agentIndex):  # agentindex always 0 here
-                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
+                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), depth))
             return retVal
 
         d = dict()
@@ -215,7 +215,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 return self.evaluationFunction(state)
             retVal = float("-Inf")
             for action in state.getLegalActions(agentIndex):  # agentindex always 0 here
-                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), A, B, depth, agentIndex + 1))
+                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), A, B, depth))
                 if retVal > B:
                     return retVal
                 A = max(A, retVal)
@@ -250,7 +250,35 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        def isGameOver(state, depth):
+            return depth == self.depth or state.isWin() or state.isLose()
+
+        def expectation(state, depth, agentIndex=1):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = 0
+            for action in state.getLegalActions(agentIndex):
+                prob = 1 / len(state.getLegalActions(agentIndex))
+                if agentIndex != (gameState.getNumAgents() - 1):  # consider ghosts
+                    retVal += (prob * expectation(state.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
+                else:  # consider pacman agent
+                    retVal += (prob * maximizer(state.generateSuccessor(agentIndex, action), depth + 1, 0))
+            return retVal
+
+        def maximizer(state, depth, agentIndex=0):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = float("-Inf")
+            for action in state.getLegalActions(agentIndex):  # agentindex always 0 here
+                retVal = max(retVal, expectation(state.generateSuccessor(agentIndex, action), depth))
+            return retVal
+
+        d = dict()
+        for action in gameState.getLegalActions(0):
+            d[action] = expectation(gameState.generateSuccessor(0, action), 0, 1)
+        return sorted(d, key=lambda x: d[x], reverse=True)[0]
+
 
 def betterEvaluationFunction(currentGameState):
     """
