@@ -155,11 +155,33 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        def helper(state, depth=1):
 
+        def isGameOver(state, depth):
+            return depth == self.depth or state.isWin() or state.isLose()
+
+        def minimizer(state, depth, agentIndex=1):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = float("Inf")
+            for action in state.getLegalActions(agentIndex):
+                if agentIndex != (gameState.getNumAgents() - 1):  # consider ghosts
+                    retVal = min(retVal, minimizer(state.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
+                else:  # consider pacman agent
+                    retVal = min(retVal, maximizer(state.generateSuccessor(agentIndex, action), depth + 1, 0))
+            return retVal
+
+        def maximizer(state, depth, agentIndex=0):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = float("-Inf")
+            for action in state.getLegalActions(agentIndex):  # agentindex always 0 here
+                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), depth, agentIndex + 1))
+            return retVal
+
+        d = dict()
         for action in gameState.getLegalActions(0):
-            
-        util.raiseNotDefined()
+            d[action] = minimizer(gameState.generateSuccessor(0, action), 0, 1)
+        return sorted(d, key=lambda x: d[x], reverse=True)[0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -171,7 +193,49 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def isGameOver(state, depth):
+            return depth == self.depth or state.isWin() or state.isLose()
+
+        def minimizer(state, A, B, depth, agentIndex=1):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = float("Inf")
+            for action in state.getLegalActions(agentIndex):
+                if agentIndex != (gameState.getNumAgents() - 1):  # consider ghosts
+                    retVal = min(retVal, minimizer(state.generateSuccessor(agentIndex, action), A, B, depth, agentIndex + 1))
+                else:  # consider pacman agent
+                    retVal = min(retVal, maximizer(state.generateSuccessor(agentIndex, action), A, B, depth + 1, 0))
+                if retVal < A:
+                    return retVal
+                B = min(B, retVal)
+            return retVal
+
+        def maximizer(state, A, B, depth, agentIndex=0):
+            if isGameOver(state, depth):
+                return self.evaluationFunction(state)
+            retVal = float("-Inf")
+            for action in state.getLegalActions(agentIndex):  # agentindex always 0 here
+                retVal = max(retVal, minimizer(state.generateSuccessor(agentIndex, action), A, B, depth, agentIndex + 1))
+                if retVal > B:
+                    return retVal
+                A = max(A, retVal)
+            return retVal
+
+        maxVal = float("-Inf")
+        alpha = float("-Inf")
+        beta = float("Inf")
+        returned_action = None
+
+        for action in gameState.getLegalActions(0):
+            value = minimizer(gameState.generateSuccessor(0, action), alpha, beta, 0, 1)
+            maxVal = max(maxVal, value)
+
+            if alpha == float("-Inf") or maxVal > alpha:
+                returned_action = action
+                alpha = maxVal
+
+        return returned_action
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
