@@ -285,7 +285,21 @@ def betterEvaluationFunction(currentGameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION:
+    I calculated the initial score with the given scoreEvaluationFunction above and found the pacman position,
+    food positions, ghost positions, scaredtimes and capsule positions from the current GameState.
+    If the game is over, then we can instantly assign a value of +Infinity or -Infinity if the gamestate is a winning state
+    or losing state respectively.
+    Then I found some quantities:
+    1. min distance to food: I used the reciprocal of this in the score value with a factor of 2 because we want the
+    pacman to eat the food closer to it and we want gains from eating to be proportional to how far it is
+    2. numCapsules: I used this with a factor of -15 because the pacman should eat capsules he encounters
+    3. min distance to active ghosts: active ghosts being close to the pacman are bad so I used the reciprocal of
+    minDistanceToActiveGhost with a factor of -5. Higher distance from the active ghost means less problem.
+    4. min distance to scared ghosts: eating scared ghosts gives more points. So closer the scared ghosts are,
+    more the pacman should consider eating it. So I used the reciprocal of minDistanceToScaredGhost with a factor of 4.
+    5. numFood: This is the amount of food remaining. It is bad to have food remaining. I used it with a factor of -20
+    so lesser the food remains, more better the evaluation score gets.
     """
     "*** YOUR CODE HERE ***"
     score = scoreEvaluationFunction(currentGameState)
