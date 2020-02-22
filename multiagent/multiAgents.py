@@ -80,18 +80,18 @@ class ReflexAgent(Agent):
         ghostPositions = [getPositionTupleFromState(ghostState) for ghostState in newGhostStates]
 
         if newPos in ghostPositions and not min(newScaredTimes) > 0:  # if not scared and pacman close to ghost position
-            return -100.0
+            return float("-Inf")
 
         if newPos in currentGameState.getFood().asList():
-            return 100.0
+            return float("Inf")
 
         nextNearestFood = min([manhattanDistance(f, newPos) for f in newFood.asList()])
         nextNearestGhost = min([manhattanDistance(g, newPos) for g in ghostPositions])
 
         if not min(newScaredTimes) > 0:  # not scared
             return 100.0*(1.0/nextNearestFood) - 100.0*(1.0/nextNearestGhost)
-        else:  # if ghost is scared, focus more on the food
-            return 100.0*(1.0/nextNearestFood) - 50*(1.0/nextNearestGhost)
+        else:  # if ghost is scared
+            return 100.0*(1.0/nextNearestFood) + 50*(1.0/nextNearestGhost)
 
         #return successorGameState.getScore()
 
@@ -288,7 +288,46 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    score = scoreEvaluationFunction(currentGameState)
+    pacmanPosition = currentGameState.getPacmanPosition()
+    foodPositions = currentGameState.getFood().asList()
+    ghostStates = currentGameState.getGhostStates()
+    scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
+    capsulePositions = currentGameState.getCapsules()
+
+    def getPositionTupleFromState(a):
+        return (a.getPosition()[0], a.getPosition()[1])
+
+    if currentGameState.isLose():
+        return float('-Inf')
+
+    if currentGameState.isWin():
+        return float('Inf')
+
+    minDistanceToFood = min([manhattanDistance(val, pacmanPosition) for val in foodPositions])
+
+    numCapsules = len(capsulePositions)
+
+    activeGhosts = [ghostStates[i] for i in range(len(scaredTimes)) if scaredTimes[i] == 0]
+    scaredGhosts = [ghostStates[i] for i in range(len(scaredTimes)) if scaredTimes[i] != 0]
+
+    minDistanceToActiveGhost = float('Inf')
+    minDistanceToScaredGhost = float('Inf')
+
+    if activeGhosts:
+        minDistanceToActiveGhost = min([manhattanDistance(getPositionTupleFromState(val), pacmanPosition) for val in activeGhosts])
+    elif scaredGhosts:
+        minDistanceToScaredGhost = min([manhattanDistance(getPositionTupleFromState(val), pacmanPosition) for val in scaredGhosts])
+
+    numFood = len(foodPositions)
+
+    score += ((1/minDistanceToFood) * 2 +
+              numCapsules * -15 +
+              (1/minDistanceToActiveGhost) * -5 +
+              (1/minDistanceToScaredGhost) * 4 +
+              numFood * -20
+              )
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
