@@ -318,7 +318,15 @@ class ExactInference(InferenceModule):
         current position is known.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+
+        new_beliefs = DiscreteDistribution()
+        for pos in self.allPositions:
+            newPosDist = self.getPositionDistribution(gameState, pos)
+            for newPos in newPosDist:
+                new_beliefs[newPos] += self.beliefs[pos] * newPosDist[newPos]
+        self.beliefs = new_beliefs
+        self.beliefs.normalize()
+
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -345,7 +353,9 @@ class ParticleFilter(InferenceModule):
         """
         self.particles = []
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        factor = len(self.legalPositions)
+        for i in range(self.numParticles):
+            self.particles.append(self.legalPositions[i % factor])
 
     def observeUpdate(self, observation, gameState):
         """
@@ -379,7 +389,13 @@ class ParticleFilter(InferenceModule):
         This function should return a normalized distribution.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+
+        self.beliefs = DiscreteDistribution()
+        for particle in self.particles:
+            self.beliefs[particle] = 1.0
+        self.beliefs.normalize()
+
+        return self.beliefs
 
 
 class JointParticleFilter(ParticleFilter):
