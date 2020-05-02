@@ -145,6 +145,13 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.learning_rate = -0.75
+        self.m1 = nn.Parameter(784, 400)
+        self.m2 = nn.Parameter(400, 200)
+        self.m3 = nn.Parameter(200, 10)
+        self.b1 = nn.Parameter(1, 400)
+        self.b2 = nn.Parameter(1, 200)
+        self.b3 = nn.Parameter(1, 10)
 
     def run(self, x):
         """
@@ -161,6 +168,15 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        step1 = nn.Linear(x, self.m1)
+        step2 = nn.AddBias(step1, self.b1)
+        step3 = nn.ReLU(step2)
+        step4 = nn.Linear(step3, self.m2)
+        step5 = nn.AddBias(step4, self.b2)
+        step6 = nn.ReLU(step5)
+        step7 = nn.Linear(step6, self.m3)
+        final_step = nn.AddBias(step7, self.b3)
+        return final_step
 
     def get_loss(self, x, y):
         """
@@ -176,12 +192,25 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(x)
+        return nn.SoftmaxLoss(predicted_y, y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        batch_size = 200
+        for x, y in dataset.iterate_forever(batch_size):
+            gradients = nn.gradients(self.get_loss(x, y), [self.m1, self.m2, self.m3, self.b1, self.b2, self.b3])
+            self.m1.update(gradients[0], self.learning_rate)
+            self.m2.update(gradients[1], self.learning_rate)
+            self.m3.update(gradients[2], self.learning_rate)
+            self.b1.update(gradients[3], self.learning_rate)
+            self.b2.update(gradients[4], self.learning_rate)
+            self.b3.update(gradients[5], self.learning_rate)
+            if dataset.get_validation_accuracy() >= 0.98:
+                return
 
 class LanguageIDModel(object):
     """
