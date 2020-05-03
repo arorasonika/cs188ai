@@ -71,7 +71,7 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
-        self.learning_rate = -0.01 #-0.001 also works
+        self.learning_rate = -0.01
         self.m1 = nn.Parameter(1, 100)
         self.m2 = nn.Parameter(100, 1)
         self.b1 = nn.Parameter(1, 100)
@@ -230,6 +230,13 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.learning_rate = -0.05
+        self.m1 = nn.Parameter(self.num_chars, 500)
+        self.m2 = nn.Parameter(500, 500)
+        self.m3 = nn.Parameter(500, len(self.languages))
+        self.b1 = nn.Parameter(1, 500)
+        self.b2 = nn.Parameter(1, 500)
+        self.b3 = nn.Parameter(1, len(self.languages))
 
     def run(self, xs):
         """
@@ -261,6 +268,18 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        first_linear_step = nn.Linear(xs[0], self.m1)
+        first_bias_step = nn.AddBias(first_linear_step, self.b1)
+        h = nn.ReLU(first_bias_step)
+
+        for item in xs:
+            linear_step = nn.Add(nn.Linear(item, self.m1), nn.Linear(h, self.m2))
+            bias_step = nn.AddBias(linear_step, self.b2)
+            h = nn.ReLU(bias_step)
+
+        final_linear_step = nn.Linear(h, self.m3)
+        final_step = nn.AddBias(final_linear_step, self.b3)
+        return final_step
 
     def get_loss(self, xs, y):
         """
@@ -277,9 +296,22 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        predicted_y = self.run(xs)
+        return nn.SoftmaxLoss(predicted_y, y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        batch_size = 100
+        for x, y in dataset.iterate_forever(batch_size):
+            gradients = nn.gradients(self.get_loss(x, y), [self.m1, self.m2, self.m3, self.b1, self.b2, self.b3])
+            self.m1.update(gradients[0], self.learning_rate)
+            self.m2.update(gradients[1], self.learning_rate)
+            self.m3.update(gradients[2], self.learning_rate)
+            self.b1.update(gradients[3], self.learning_rate)
+            self.b2.update(gradients[4], self.learning_rate)
+            self.b3.update(gradients[5], self.learning_rate)
+            if dataset.get_validation_accuracy() >= 0.88:
+                return
